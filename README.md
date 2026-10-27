@@ -1,6 +1,6 @@
 # Eyo: Spirit of Lagos
 
-Explore Lagos. Unite the community. Celebrate its spirit.
+Many Stories. One Lagos Spirit.
 
 First playable solo browser prototype for https://adamuorisha.africandroid.world, hosted by the owner on Olamidepanel. This repository is the deployment source. No Sites hosting is required.
 
@@ -20,7 +20,7 @@ This is a 2D solo prototype. It does not yet provide a 3D world, online private 
 4. Run `ansible-playbook -i /path/to/inventory.ini deploy/playbook.yml --syntax-check`.
 5. Run `ansible-playbook -i /path/to/inventory.ini deploy/playbook.yml -e release_ref=COMMIT_SHA`.
 
-The playbook pulls the source and copies only the three public game files, backing up replaced files. It preserves existing web server configuration; it does not create DNS, TLS, or panel sites. Review backups if rolling back. Pin release_ref to a reviewed commit for repeatable deployment. The main branch is allowed for development.
+The playbook pulls the source and copies the game files and brand assets, backing up replaced files. It preserves existing web server configuration; it does not create DNS, TLS, or panel sites. Review backups if rolling back. Pin release_ref to a reviewed commit for repeatable deployment. The main branch is allowed for development.
 
 ## Privacy
 The prototype stores settings and game progress in localStorage on the player's device. It sends no game telemetry and contains no remote assets, third-party scripts, payments, or advertising. Hosting access logs remain under the operator's control. Reset progress clears task completion; browser site-data settings clear all stored settings.
@@ -40,3 +40,20 @@ bash deploy/deploy.sh /ACTUAL/DOCUMENT/ROOT
 Replace /ACTUAL/DOCUMENT/ROOT with the domain's existing document root in Olamidepanel. Do not guess this path. If /opt/eyo-deploy already exists as this repository, run `git -C /opt/eyo-deploy pull --ff-only` instead of cloning again. Repeat the wrapper command to pull and deploy updates. An optional second argument selects a commit/tag instead of main.
 
 The wrapper is for local execution on the target server; the inventory example remains available for remote Ansible. It validates the root, runs a syntax check, pulls source into /opt/eyo-spirit-source, validates all source assets, copies with timestamped backups, and reports the deployed commit. Existing site ownership and panel web-server configuration are preserved. Backups are beside replaced assets: move them to private storage after review so the web server does not expose old versions. Deployment does not prove public DNS/TLS or browser behavior; verify the public URL after running.
+
+## Visual identity
+Slogan: **Many Stories. One Lagos Spirit.**
+
+The original SVG emblem combines a white broad-brimmed hat, flowing cloth, and lagoon waves in a gold ring. Palette: lagoon green #153c35, warm gold #b78642, ivory #faf5e9. The header and favicon use public/assets/eyo-mark.svg. Two AI-generated illustrations appear in the hero and community sections. Artwork is imaginative, not documentary. This identity is custom-created for this project; no trademark clearance is implied.
+
+Image prompts used with the built-in image generator: (1) warm stylized 3D Lagos Island procession, dignified white-robed Eyo figures, upright ceremonial staffs, volunteers, lagoon, ivory/gold/green, no text or sacred rites; (2) stylized 3D community volunteers painting fabric banners and preparing garlands in a sunny Lagos-inspired courtyard, matching palette, no text or sacred rites.
+
+## Automatic path detection and ports
+On the Olamidepanel server, update this checkout and run:
+```bash
+git -C /opt/eyo-deploy pull --ff-only
+bash /opt/eyo-deploy/deploy/deploy.sh
+```
+With no path argument the launcher inspects the active Nginx configuration for an exact adamuorisha.africandroid.world server_name and a single explicit existing root. It stops on missing, ambiguous, inherited, included-only, variable-based, or proxy-only roots; supply the verified panel document root explicitly in those cases. It never guesses a path.
+
+This game is static: it uses the domain's existing HTTP/HTTPS service, normally ports 80/443. No Node port, reverse-proxy process, firewall rule, or service restart is introduced. The launcher cannot guarantee that unrelated DNS, TLS, routing, firewall, or panel configuration issues are fixed. Verify the public URL after deployment.

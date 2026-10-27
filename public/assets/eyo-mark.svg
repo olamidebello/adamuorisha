@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title desc">
+<title id="title">Eyo: Spirit of Lagos emblem</title>
+<desc id="desc">A white broad-brimmed hat above flowing cloth and lagoon waves within a gold ring.</desc>
+<circle cx="60" cy="60" r="56" fill="#153c35" stroke="#b78642" stroke-width="3"/>
+<path d="M41 43 45 28 Q60 23 75 28L79 43Z" fill="#faf5e9"/>
+<ellipse cx="60" cy="44" rx="34" ry="8" fill="#faf5e9"/>
+<path d="M48 51 37 84 Q60 94 83 84L72 51Z" fill="#faf5e9"/>
+<path d="M60 54 55 83M68 57 74 82" fill="none" stroke="#d6d4c2" stroke-width="2"/>
+<path d="M26 91Q38 84 49 91T72 91T95 91M32 99Q44 92 55 99T78 99T91 98" fill="none" stroke="#b78642" stroke-width="3" stroke-linecap="round"/>
+</svg>
