@@ -27,3 +27,16 @@ The prototype stores settings and game progress in localStorage on the player's 
 
 ## Cultural production roadmap
 Commission custodian review, approved vocabulary and narration, musician recordings with permissions and attribution, then implement 3D exploration and authenticated private cooperative rooms with shared server-side task state. Fictional activities must remain identified separately from documented traditions.
+
+## Deploy directly on the Olamidepanel server
+As root on the server:
+```bash
+apt-get update
+apt-get install -y ansible git python3
+git clone https://github.com/olamidebello/adamuorisha.git /opt/eyo-deploy
+cd /opt/eyo-deploy
+bash deploy/deploy.sh /ACTUAL/DOCUMENT/ROOT
+```
+Replace /ACTUAL/DOCUMENT/ROOT with the domain's existing document root in Olamidepanel. Do not guess this path. If /opt/eyo-deploy already exists as this repository, run `git -C /opt/eyo-deploy pull --ff-only` instead of cloning again. Repeat the wrapper command to pull and deploy updates. An optional second argument selects a commit/tag instead of main.
+
+The wrapper is for local execution on the target server; the inventory example remains available for remote Ansible. It validates the root, runs a syntax check, pulls source into /opt/eyo-spirit-source, validates all source assets, copies with timestamped backups, and reports the deployed commit. Existing site ownership and panel web-server configuration are preserved. Backups are beside replaced assets: move them to private storage after review so the web server does not expose old versions. Deployment does not prove public DNS/TLS or browser behavior; verify the public URL after running.
