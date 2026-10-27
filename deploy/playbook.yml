@@ -10,6 +10,7 @@
       - index.html
       - style.css
       - game.js
+      - i18n.js
       - assets/eyo-mark.svg
       - assets/lagos-procession-v1.png
       - assets/community-workshop-v1.png
@@ -79,3 +80,4 @@
     - name: Show deployment result
       ansible.builtin.debug:
         msg: "Deployed {{ deployed_revision.stdout }} to {{ panel_document_root }}. Verify https://adamuorisha.africandroid.world/ and its DNS/TLS in Olamidepanel."
+

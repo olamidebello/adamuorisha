@@ -117,6 +117,7 @@
             - ""
             - style.css
             - game.js
+            - i18n.js
             - assets/eyo-mark.svg
             - assets/lagos-procession-v1.png
             - assets/community-workshop-v1.png
@@ -143,4 +144,5 @@
             msg: "The new game virtual host was removed after validation or routing failed. Existing virtual host files were not edited. Review the preceding error."
     - name: Show the new HTTP deployment and remaining HTTPS step
       ansible.builtin.debug:
-        msg: "HTTP game routing and six assets passed local checks. New root: {{ eyo_root }}. Configure DNS to this game server and enable HTTPS for adamuorisha.africandroid.world in Olamidepanel. The separate Apps Store server was not contacted."
+        msg: "HTTP game routing and seven files passed local checks. New root: {{ eyo_root }}. Configure DNS to this game server and enable HTTPS for adamuorisha.africandroid.world in Olamidepanel. The separate Apps Store server was not contacted."
+

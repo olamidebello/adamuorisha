@@ -68,3 +68,18 @@ For the first use of this launcher, update the existing checkout with `git -C /o
 The launcher installs missing Debian dependencies, takes a deployment lock, verifies the checkout's remote and branch, refuses local modifications, pulls main without rewriting history, then runs Ansible with automatic document-root discovery. Pass a verified root as argument one if discovery cannot identify it; argument two optionally pins game assets to a commit/tag. The deployment tooling is updated from main. Each deployment is invoked explicitly; no timer or recurring deployment is installed.
 
 The African Apps Store is hosted on a separate server. This game deployment does not access, deploy, or register a listing on that server. Existing HTTP/HTTPS routing is reused; no additional application port is opened.
+
+## Player language selection
+Nigerian Pidgin (pcm) is the default for players without a saved language preference. The header selector also offers English (en), Yorùbá (yo), and Français (fr). The choice is saved separately from game progress as eyo-language-v1 in browser localStorage. No browser-location inference overrides this default.
+
+The 105-entry text catalog in public/i18n.js covers the interface, quests, answers, story cards, map labels, rhythm prompts, settings, accessibility descriptions, and feedback. English is the source and fallback. Proper names and the game title are retained. These are draft text translations; Yoruba is general Yoruba, not a claim of an authenticated Lagos dialect, and there is no translated audio. Native-speaker editorial review remains recommended.
+
+Switching languages refreshes the current location and restarts any active rhythm exercise without clearing completed tasks or stars. Existing players without a language preference receive Pidgin while retaining progress. Run `node --test tests/languages.test.cjs` to verify defaults, saved preferences, quest coverage, interpolation and progress preservation.
+
+Deploy the update on the game server:
+```bash
+git -C /opt/eyo-deploy pull --ff-only
+bash /opt/eyo-deploy/deploy/server-deploy.sh /var/www/eyo-spirit/public
+```
+The ordinary deployment copies the translation file with the game assets and preserves the working HTTP/HTTPS configuration. Do not rerun bootstrap-http.yml for an already configured site. The separate Apps Store server is not contacted.
+

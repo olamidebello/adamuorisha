@@ -149,6 +149,7 @@
           loop:
             - style.css
             - game.js
+            - i18n.js
             - assets/eyo-mark.svg
             - assets/lagos-procession-v1.png
             - assets/community-workshop-v1.png
@@ -172,3 +173,4 @@
     - name: Report verified local HTTPS routing
       ansible.builtin.debug:
         msg: "HTTPS certificate, SNI routing, game page and all assets passed locally. Open https://{{ eyo_domain }}/ to confirm public DNS routing."
+
