@@ -57,3 +57,14 @@ bash /opt/eyo-deploy/deploy/deploy.sh
 With no path argument the launcher inspects the active Nginx configuration for an exact adamuorisha.africandroid.world server_name and a single explicit existing root. It stops on missing, ambiguous, inherited, included-only, variable-based, or proxy-only roots; supply the verified panel document root explicitly in those cases. It never guesses a path.
 
 This game is static: it uses the domain's existing HTTP/HTTPS service, normally ports 80/443. No Node port, reverse-proxy process, firewall rule, or service restart is introduced. The launcher cannot guarantee that unrelated DNS, TLS, routing, firewall, or panel configuration issues are fixed. Verify the public URL after deployment.
+
+## One-command game-server pull and deploy
+Run the following as root on the Olamidepanel **game server**:
+```bash
+bash /opt/eyo-deploy/deploy/server-deploy.sh
+```
+For the first use of this launcher, update the existing checkout with `git -C /opt/eyo-deploy pull --ff-only`. If there is no checkout, first install Git and clone this repository to /opt/eyo-deploy.
+
+The launcher installs missing Debian dependencies, takes a deployment lock, verifies the checkout's remote and branch, refuses local modifications, pulls main without rewriting history, then runs Ansible with automatic document-root discovery. Pass a verified root as argument one if discovery cannot identify it; argument two optionally pins game assets to a commit/tag. The deployment tooling is updated from main. Each deployment is invoked explicitly; no timer or recurring deployment is installed.
+
+The African Apps Store is hosted on a separate server. This game deployment does not access, deploy, or register a listing on that server. Existing HTTP/HTTPS routing is reused; no additional application port is opened.
