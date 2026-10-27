@@ -22,6 +22,34 @@
           - "'adamuorisha.africandroid.world' not in nginx_before.stdout"
           - "'/etc/nginx/conf.d/*.conf' in nginx_before.stdout"
         fail_msg: "Bootstrap stopped: the domain already appears in Nginx, the dedicated file exists, or conf.d is not included. Use normal deployment for an existing site."
+    - name: Discover existing HTTP listener addresses without changing other sites
+      ansible.builtin.command:
+        argv:
+          - python3
+          - -c
+          - |
+            import json, re, sys
+            config = sys.stdin.read()
+            addresses = {"80", "127.0.0.1:80"}
+            for match in re.finditer(r"(?m)^\s*listen\s+([^;]+);", config):
+                parts = match.group(1).split()
+                address = parts[0]
+                if address == "80" or address.endswith(":80"):
+                    if "ssl" in parts:
+                        sys.exit("An SSL listener on port 80 requires manual review.")
+                    if address in ("*:80", "0.0.0.0:80"):
+                        address = "80"
+                    if re.fullmatch(r"80|(?:[0-9]{1,3}\.){3}[0-9]{1,3}:80|\[[0-9a-fA-F:]+\]:80", address):
+                        addresses.add(address)
+                    else:
+                        sys.exit("Unsupported port-80 listener: " + address)
+            print(json.dumps(sorted(addresses)))
+        stdin: "{{ nginx_before.stdout }}"
+      changed_when: false
+      register: http_listeners
+    - name: Retain the listener set for site activation
+      ansible.builtin.set_fact:
+        eyo_http_listeners: "{{ http_listeners.stdout | from_json }}"
     - name: Create the new dedicated game document root
       ansible.builtin.file:
         path: "{{ eyo_root }}"
@@ -50,13 +78,16 @@
             content: |
               # Eyo game standalone site; Apps Store lives on another server.
               server {
-                  listen 80;
+              {% for endpoint in eyo_http_listeners %}
+                  listen {{ endpoint }};
+              {% endfor %}
                   server_name adamuorisha.africandroid.world;
                   root /var/www/eyo-spirit/public;
                   index index.html;
                   location / { try_files $uri $uri/ =404; }
                   location ~ /\. { deny all; }
                   add_header X-Content-Type-Options nosniff;
+                  add_header X-Eyo-Route static-v1 always;
               }
         - name: Validate all Nginx configuration before reload
           ansible.builtin.command: nginx -t
@@ -80,6 +111,8 @@
               Host: adamuorisha.africandroid.world
             return_content: "{{ item == '' }}"
             status_code: 200
+            follow_redirects: none
+            use_proxy: false
           loop:
             - ""
             - style.css
@@ -92,6 +125,7 @@
           ansible.builtin.assert:
             that:
               - "'<title>Eyo: Spirit of Lagos</title>' in health.results[0].content"
+              - "health.results[0].x_eyo_route | default('') == 'static-v1'"
       rescue:
         - name: Remove the new configuration after a failure
           ansible.builtin.file:
