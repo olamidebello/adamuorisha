@@ -1,0 +1,46 @@
+---
+- name: Deploy Eyo to an existing Olamidepanel document root
+  hosts: eyo
+  become: true
+  vars:
+    repository_url: https://github.com/olamidebello/adamuorisha.git
+    release_ref: main
+    checkout_dir: /opt/eyo-spirit-source
+  tasks:
+    - name: Require an explicitly selected panel document root
+      ansible.builtin.assert:
+        that:
+          - panel_document_root is defined
+          - panel_document_root | length > 12
+          - panel_document_root.startswith('/')
+          - panel_document_root not in ['/', '/var/www', '/var/www/html', '/home']
+        fail_msg: Set panel_document_root to the existing adamuorisha.africandroid.world document root shown by Olamidepanel.
+    - name: Install Git
+      ansible.builtin.package:
+        name: git
+        state: present
+    - name: Pull selected revision
+      ansible.builtin.git:
+        repo: "{{ repository_url }}"
+        dest: "{{ checkout_dir }}"
+        version: "{{ release_ref }}"
+        force: false
+    - name: Verify document root already exists
+      ansible.builtin.stat:
+        path: "{{ panel_document_root }}"
+      register: document_root
+    - name: Refuse to invent a panel path
+      ansible.builtin.assert:
+        that:
+          - document_root.stat.isdir | default(false)
+    - name: Copy game assets with backups
+      ansible.builtin.copy:
+        src: "{{ checkout_dir }}/public/{{ item }}"
+        dest: "{{ panel_document_root }}/{{ item }}"
+        remote_src: true
+        mode: '0644'
+        backup: true
+      loop:
+        - index.html
+        - style.css
+        - game.js
