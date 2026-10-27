@@ -1,6 +1,6 @@
 ---
 - name: Deploy Eyo to an existing Olamidepanel document root
-  hosts: eyo
+  hosts: eyo:localhost
   become: true
   vars:
     repository_url: https://github.com/olamidebello/adamuorisha.git
@@ -33,6 +33,22 @@
       ansible.builtin.assert:
         that:
           - document_root.stat.isdir | default(false)
+    - name: Validate every source file before replacing live assets
+      ansible.builtin.stat:
+        path: "{{ checkout_dir }}/public/{{ item }}"
+      register: source_assets
+      loop:
+        - index.html
+        - style.css
+        - game.js
+    - name: Refuse an incomplete release
+      ansible.builtin.assert:
+        that:
+          - item.stat.isreg | default(false)
+          - item.stat.size | default(0) > 0
+      loop: "{{ source_assets.results }}"
+      loop_control:
+        label: "{{ item.item }}"
     - name: Copy game assets with backups
       ansible.builtin.copy:
         src: "{{ checkout_dir }}/public/{{ item }}"
@@ -44,3 +60,16 @@
         - index.html
         - style.css
         - game.js
+    - name: Report deployed revision and destination
+      ansible.builtin.command:
+        argv:
+          - git
+          - -C
+          - "{{ checkout_dir }}"
+          - rev-parse
+          - HEAD
+      changed_when: false
+      register: deployed_revision
+    - name: Show deployment result
+      ansible.builtin.debug:
+        msg: "Deployed {{ deployed_revision.stdout }} to {{ panel_document_root }}. Verify https://adamuorisha.africandroid.world/ and its DNS/TLS in Olamidepanel."
