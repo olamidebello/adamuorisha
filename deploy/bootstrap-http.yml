@@ -1,0 +1,112 @@
+---
+- name: Prepare a dedicated document root for the missing game website
+  hosts: localhost
+  connection: local
+  become: true
+  vars:
+    eyo_root: /var/www/eyo-spirit/public
+    eyo_vhost: /etc/nginx/conf.d/eyo-spirit.conf
+  tasks:
+    - name: Check the current Nginx configuration
+      ansible.builtin.command: nginx -T
+      changed_when: false
+      register: nginx_before
+    - name: Check whether the dedicated configuration already exists
+      ansible.builtin.stat:
+        path: "{{ eyo_vhost }}"
+      register: vhost_before
+    - name: Require an unconfigured game domain and supported Nginx include
+      ansible.builtin.assert:
+        that:
+          - not vhost_before.stat.exists
+          - "'adamuorisha.africandroid.world' not in nginx_before.stdout"
+          - "'/etc/nginx/conf.d/*.conf' in nginx_before.stdout"
+        fail_msg: "Bootstrap stopped: the domain already appears in Nginx, the dedicated file exists, or conf.d is not included. Use normal deployment for an existing site."
+    - name: Create the new dedicated game document root
+      ansible.builtin.file:
+        path: "{{ eyo_root }}"
+        state: directory
+        mode: '0755'
+
+- name: Pull and deploy the game before activating its new website
+  ansible.builtin.import_playbook: playbook.yml
+  vars:
+    panel_document_root: /var/www/eyo-spirit/public
+
+- name: Activate and verify the dedicated HTTP website
+  hosts: localhost
+  connection: local
+  become: true
+  vars:
+    eyo_root: /var/www/eyo-spirit/public
+    eyo_vhost: /etc/nginx/conf.d/eyo-spirit.conf
+  tasks:
+    - name: Add the new site with configuration rollback on failure
+      block:
+        - name: Write only the dedicated game configuration
+          ansible.builtin.copy:
+            dest: "{{ eyo_vhost }}"
+            mode: '0644'
+            content: |
+              # Eyo game standalone site; Apps Store lives on another server.
+              server {
+                  listen 80;
+                  server_name adamuorisha.africandroid.world;
+                  root /var/www/eyo-spirit/public;
+                  index index.html;
+                  location / { try_files $uri $uri/ =404; }
+                  location ~ /\. { deny all; }
+                  add_header X-Content-Type-Options nosniff;
+              }
+        - name: Validate all Nginx configuration before reload
+          ansible.builtin.command: nginx -t
+          changed_when: false
+        - name: Confirm the new configuration is actually included
+          ansible.builtin.command: nginx -T
+          changed_when: false
+          register: nginx_after
+        - name: Require the new virtual host to be loaded
+          ansible.builtin.assert:
+            that:
+              - "'configuration file /etc/nginx/conf.d/eyo-spirit.conf:' in nginx_after.stdout"
+        - name: Reload the existing Nginx service
+          ansible.builtin.service:
+            name: nginx
+            state: reloaded
+        - name: Verify domain routing locally for every deployed asset
+          ansible.builtin.uri:
+            url: "http://127.0.0.1/{{ item }}"
+            headers:
+              Host: adamuorisha.africandroid.world
+            return_content: "{{ item == '' }}"
+            status_code: 200
+          loop:
+            - ""
+            - style.css
+            - game.js
+            - assets/eyo-mark.svg
+            - assets/lagos-procession-v1.png
+            - assets/community-workshop-v1.png
+          register: health
+        - name: Require the game page rather than another site's response
+          ansible.builtin.assert:
+            that:
+              - "'<title>Eyo: Spirit of Lagos</title>' in health.results[0].content"
+      rescue:
+        - name: Remove the new configuration after a failure
+          ansible.builtin.file:
+            path: "{{ eyo_vhost }}"
+            state: absent
+        - name: Validate the restored configuration
+          ansible.builtin.command: nginx -t
+          changed_when: false
+        - name: Reload the restored configuration
+          ansible.builtin.service:
+            name: nginx
+            state: reloaded
+        - name: Report bootstrap failure
+          ansible.builtin.fail:
+            msg: "The new game virtual host was removed after validation or routing failed. Existing virtual host files were not edited. Review the preceding error."
+    - name: Show the new HTTP deployment and remaining HTTPS step
+      ansible.builtin.debug:
+        msg: "HTTP game routing and six assets passed local checks. New root: {{ eyo_root }}. Configure DNS to this game server and enable HTTPS for adamuorisha.africandroid.world in Olamidepanel. The separate Apps Store server was not contacted."
